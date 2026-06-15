@@ -205,15 +205,6 @@ After identification, you'll see:
 | Port already in use | Change port in `app.py` or kill process using port 5000 |
 | Dependencies error | Update pip: `pip install --upgrade pip` |
 
-## 🚀 Deployment
-
-### Heroku Deployment
-```bash
-git add .
-git commit -m "Ready for deployment"
-git push heroku main
-```
-
 ### Environment Requirements
 - `runtime.txt`: Python 3.11.6
 - `procfile`: Gunicorn server configuration
