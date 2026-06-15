@@ -332,28 +332,6 @@
       filter: saturate(1.08);
     }
 
-    .scanner-line {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 5px;
-      background: linear-gradient(to bottom, rgba(16, 218, 134, 0), rgba(16, 218, 134, 0.95), rgba(16, 218, 134, 0));
-      transform: translateY(-100%);
-      opacity: 0;
-    }
-
-    .scanner-line.active {
-      opacity: 1;
-      animation: scan 1.6s ease-in-out forwards;
-    }
-
-    @keyframes scan {
-      0% { transform: translateY(-100%); }
-      50% { transform: translateY(100%); }
-      100% { transform: translateY(100%); }
-    }
-
     .result-image img {
       width: 100%;
       max-height: 240px;
@@ -511,7 +489,6 @@
         <!-- Preview -->
         <div class="preview-container" id="previewContainer">
           <img id="preview" src="" alt="Preview">
-          <div class="scanner-line" id="scannerLine"></div>
         </div>
 
         <!-- Messages -->
@@ -674,11 +651,6 @@
       const container = document.getElementById('previewContainer');
       document.getElementById('preview').src = src;
       container.classList.add('active');
-      const scannerLine = document.getElementById('scannerLine');
-      if (scannerLine) {
-        scannerLine.classList.remove('active');
-        void scannerLine.offsetWidth;
-      }
     }
 
     // Prediction
@@ -690,20 +662,9 @@
 
       const spinner = document.getElementById('spinner');
       const predictBtn = document.getElementById('predictBtn');
-      const scannerLine = document.getElementById('scannerLine');
 
       if (spinner) spinner.classList.add('active');
       if (predictBtn) predictBtn.style.display = 'none';
-
-      if (scannerLine) {
-        scannerLine.classList.remove('active');
-        void scannerLine.offsetWidth;
-        scannerLine.classList.add('active');
-      }
-
-      const scanComplete = scannerLine ? new Promise(resolve => {
-        scannerLine.addEventListener('animationend', resolve, { once: true });
-      }) : Promise.resolve();
 
       try {
         const formData = new FormData();
@@ -713,8 +674,6 @@
           method: 'POST',
           body: formData
         });
-
-        await scanComplete;
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -731,10 +690,6 @@
         showError('Error identifying plant: ' + error.message);
       } finally {
         if (spinner) spinner.classList.remove('active');
-        if (scannerLine) {
-          scannerLine.classList.remove('active');
-          void scannerLine.offsetWidth;
-        }
         document.getElementById('resetBtn').style.display = 'inline-flex';
       }
     }
