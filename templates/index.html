@@ -304,8 +304,14 @@
     /* Preview Container */
     .preview-container {
       position: relative;
-      margin: 20px 0;
+      margin: 20px auto;
       display: none;
+      width: 240px;
+      max-width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 18px 35px rgba(0, 0, 0, 0.12);
+      animation: fadeIn 0.45s ease;
     }
 
     .preview-container.active {
@@ -314,8 +320,16 @@
 
     .preview-container img {
       width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      height: 190px;
+      object-fit: cover;
+      display: block;
+      border-radius: 18px;
+      transition: transform 0.4s ease, filter 0.4s ease;
+    }
+
+    .preview-container:hover img {
+      transform: scale(1.03);
+      filter: saturate(1.08);
     }
 
     .scanner-line {
@@ -323,19 +337,52 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 3px;
-      background: linear-gradient(to bottom, rgba(16, 218, 134, 0), rgba(16, 218, 134, 0.8), rgba(16, 218, 134, 0));
-      animation: scan 2s linear infinite;
+      height: 5px;
+      background: linear-gradient(to bottom, rgba(16, 218, 134, 0), rgba(16, 218, 134, 0.95), rgba(16, 218, 134, 0));
+      transform: translateY(-100%);
       opacity: 0;
     }
 
     .scanner-line.active {
       opacity: 1;
+      animation: scan 1.6s ease-in-out forwards;
     }
 
     @keyframes scan {
-      0% { top: 0; }
-      100% { top: 100%; }
+      0% { transform: translateY(-100%); }
+      50% { transform: translateY(100%); }
+      100% { transform: translateY(100%); }
+    }
+
+    .result-image img {
+      width: 100%;
+      max-height: 240px;
+      object-fit: cover;
+      border-radius: 14px;
+      transform: scale(0.98);
+      transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .result-image img:hover {
+      transform: scale(1);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    @keyframes scan {
+      0% { transform: translateY(-100%); }
+      50% { transform: translateY(100%); }
+      100% { transform: translateY(100%); }
+    }
+
+    .result-section {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .result-section.active {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     /* Error Message */
@@ -431,8 +478,8 @@
         <h2><i class="fas fa-images"></i> Capture Plant Image</h2>
         
         <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab('upload')">Upload</button>
-          <button class="tab-btn" onclick="switchTab('camera')">Camera</button>
+          <button class="tab-btn active" onclick="switchTab(event, 'upload')">Upload</button>
+          <button class="tab-btn" onclick="switchTab(event, 'camera')">Camera</button>
         </div>
 
         <!-- Upload Tab -->
@@ -532,11 +579,13 @@
     let currentStream = null;
 
     // Tab switching
-    function switchTab(tab) {
+    function switchTab(evt, tab) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-      document.event.target.closest('.tab-btn').classList.add('active');
+      const selectedTab = document.getElementById(tab);
+      if (selectedTab) selectedTab.classList.add('active');
+      const button = evt?.currentTarget || evt?.target;
+      if (button?.classList) button.classList.add('active');
 
       if (tab === 'camera') {
         startCamera();
@@ -625,7 +674,11 @@
       const container = document.getElementById('previewContainer');
       document.getElementById('preview').src = src;
       container.classList.add('active');
-      document.getElementById('scannerLine').classList.add('active');
+      const scannerLine = document.getElementById('scannerLine');
+      if (scannerLine) {
+        scannerLine.classList.remove('active');
+        void scannerLine.offsetWidth;
+      }
     }
 
     // Prediction
@@ -636,45 +689,92 @@
       }
 
       const spinner = document.getElementById('spinner');
-      spinner.classList.add('active');
-      document.getElementById('predictBtn').style.display = 'none';
+      const predictBtn = document.getElementById('predictBtn');
+      const scannerLine = document.getElementById('scannerLine');
+
+      if (spinner) spinner.classList.add('active');
+      if (predictBtn) predictBtn.style.display = 'none';
+
+      if (scannerLine) {
+        scannerLine.classList.remove('active');
+        void scannerLine.offsetWidth;
+        scannerLine.classList.add('active');
+      }
+
+      const scanComplete = scannerLine ? new Promise(resolve => {
+        scannerLine.addEventListener('animationend', resolve, { once: true });
+      }) : Promise.resolve();
 
       try {
         const formData = new FormData();
         formData.append('image', currentFile);
 
-        const response = await fetch('/predict', {
+        const fetchPromise = fetch('/predict', {
           method: 'POST',
-          body: formData
+          body: formData,
+          signal: AbortSignal.timeout(30000)
         });
 
-        if (!response.ok) throw new Error('Prediction failed');
-        
+        const [response] = await Promise.all([fetchPromise, scanComplete]);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
-        showResult(data);
+        if (data.error) {
+          showError(data.error);
+        } else {
+          showResult(data);
+          showSuccess('Plant identified successfully!');
+        }
       } catch (error) {
         showError('Error identifying plant: ' + error.message);
       } finally {
-        spinner.classList.remove('active');
+        if (spinner) spinner.classList.remove('active');
+        if (scannerLine) {
+          scannerLine.classList.remove('active');
+          void scannerLine.offsetWidth;
+        }
         document.getElementById('resetBtn').style.display = 'inline-flex';
       }
     }
 
     function showResult(data) {
-      document.getElementById('resultSection').style.display = 'block';
-      document.getElementById('plantName').textContent = data.plant;
-      document.getElementById('confidence').textContent = 'Confidence: High';
-      document.getElementById('resultImage').innerHTML = `<img src="${data.image_url}" alt="${data.plant}">`;
-      document.getElementById('scientificName').textContent = data.plant || 'N/A';
-      document.getElementById('usage').textContent = 'Traditional medicinal uses and health benefits information will appear here.';
-      document.getElementById('additionalInfo').textContent = 'Additional plant characteristics and information.';
+      const resultSection = document.getElementById('resultSection');
+      const plantNameEl = document.getElementById('plantName');
+      const confidenceEl = document.getElementById('confidence');
+      const resultImageEl = document.getElementById('resultImage');
+      const scientificNameEl = document.getElementById('scientificName');
+      const usageEl = document.getElementById('usage');
+      const additionalInfoEl = document.getElementById('additionalInfo');
+
+      if (resultSection) {
+        resultSection.style.display = 'block';
+        resultSection.classList.add('active');
+      }
+      if (plantNameEl) plantNameEl.textContent = data.plant || 'Unknown Plant';
+      if (confidenceEl) confidenceEl.textContent = data.confidence || 'Confidence: High';
+
+      if (resultImageEl) {
+        resultImageEl.innerHTML = `<img src="${data.image_url || ''}" alt="${data.plant || 'Plant'}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23ddd%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23999%22%3EImage Not Available%3C/text%3E%3C/svg%3E'">`;
+      }
+
+      if (scientificNameEl) scientificNameEl.textContent = data.scientific_name || data.plant || 'N/A';
+      if (usageEl) usageEl.textContent = data.usage || 'Medicinal usage details are not available for this plant.';
+      if (additionalInfoEl) additionalInfoEl.textContent = data.additionalInfo || 'Additional plant characteristics and information will appear here.';
     }
 
     function resetForm() {
       currentFile = null;
       fileInput.value = '';
-      document.getElementById('previewContainer').classList.remove('active');
-      document.getElementById('resultSection').style.display = 'none';
+      const previewContainer = document.getElementById('previewContainer');
+      if (previewContainer) previewContainer.classList.remove('active');
+      const resultSection = document.getElementById('resultSection');
+      if (resultSection) {
+        resultSection.style.display = 'none';
+        resultSection.classList.remove('active');
+      }
       document.getElementById('predictBtn').style.display = 'none';
       document.getElementById('resetBtn').style.display = 'none';
       clearMessages();
@@ -701,7 +801,22 @@
     }
 
     function downloadReport() {
-      showSuccess('Report download initiated');
+      const plantName = document.getElementById('plantName')?.textContent || 'Plant Analysis';
+      const scientificName = document.getElementById('scientificName')?.textContent || 'N/A';
+      const usage = document.getElementById('usage')?.textContent || 'N/A';
+      const additionalInfo = document.getElementById('additionalInfo')?.textContent || 'N/A';
+      const report = `Medicinal Plant Analysis Report\n\nPlant: ${plantName}\nScientific Name: ${scientificName}\nUsage: ${usage}\nAdditional Info: ${additionalInfo}\nGenerated: ${new Date().toLocaleString()}\n`;
+
+      const blob = new Blob([report], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${plantName.replace(/\s+/g, '-').toLowerCase()}-report.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showSuccess('Report downloaded successfully!');
     }
   </script>
 </body>

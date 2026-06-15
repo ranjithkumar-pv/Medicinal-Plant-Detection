@@ -146,7 +146,11 @@ function showPreview(src) {
 
   if (preview) preview.src = src;
   if (container) container.classList.add('active');
-  if (scannerLine) scannerLine.classList.add('active');
+  if (scannerLine) {
+    scannerLine.classList.remove('active');
+    void scannerLine.offsetWidth;
+    scannerLine.classList.add('active');
+  }
 }
 
 // Prediction
@@ -158,9 +162,11 @@ async function predict() {
 
   const spinner = document.getElementById('spinner');
   const predictBtn = document.getElementById('predictBtn');
+  const scannerLine = document.getElementById('scannerLine');
 
   if (spinner) spinner.classList.add('active');
   if (predictBtn) predictBtn.style.display = 'none';
+  if (scannerLine) scannerLine.classList.add('active');
 
   try {
     const formData = new FormData();
@@ -181,6 +187,7 @@ async function predict() {
     if (data.error) {
       showError(data.error);
     } else {
+      await new Promise(resolve => setTimeout(resolve, 1200));
       showResult(data);
       showSuccess('Plant identified successfully!');
     }
@@ -188,6 +195,10 @@ async function predict() {
     showError('Error identifying plant: ' + error.message);
   } finally {
     if (spinner) spinner.classList.remove('active');
+    if (scannerLine) {
+      scannerLine.classList.remove('active');
+      void scannerLine.offsetWidth;
+    }
     document.getElementById('resetBtn').style.display = 'inline-flex';
   }
 }
@@ -197,6 +208,7 @@ function showResult(data) {
   if (!resultSection) return;
 
   resultSection.style.display = 'block';
+  resultSection.classList.add('active');
   
   if (document.getElementById('plantName')) {
     document.getElementById('plantName').textContent = data.plant || 'Unknown Plant';
