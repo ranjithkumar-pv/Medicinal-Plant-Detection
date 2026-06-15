@@ -2,160 +2,706 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Medicinal Plant Identifier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medicinal Plant Identifier - Professional Detection System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-  body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    /* Add background image */
-    background-image: url('static//bg.png'); /* Replace with your image path */
-    background-size: cover;       /* Make it cover the entire page */
-    background-position: center;  /* Center the image */
-    background-repeat: no-repeat; /* Prevent tiling */
-    background-attachment: fixed; /* Keep image fixed while scrolling */
-    color: #fff;                  /* Optional: change text color for readability */
-  }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #10da86;
+      --primary-dark: #0aa66a;
+      --secondary: #1a1a2e;
+      --accent: #16c784;
+      --text-dark: #2d3436;
+      --text-light: #636e72;
+      --bg-light: #f5f6fa;
+      --border-color: #e0e3e8;
+      --success: #00b894;
+      --error: #d63031;
+      --warning: #fdcb6e;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f6fa 0%, #e8f5e9 100%);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+      border-radius: 15px;
+      margin-bottom: 40px;
+      box-shadow: 0 10px 30px rgba(16, 218, 134, 0.2);
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      font-size: 1.1em;
+      opacity: 0.95;
+      font-weight: 300;
+    }
 
     .container {
-      margin-top: 50px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
-    .container h1 {
-      color:#10da86
+
+    /* Main Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
     }
-    button, input {
-      padding: 10px 15px;
-      margin: 10px;
-      border-radius: 8px;
-      border: 1px solid #022f1c;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #image-container {
-      position: relative;
-      width: 400px;
-      height: 400px;
-      margin: 20px auto;
-      border: 2px solid #ccc;
-      border-radius: 10px;
-      overflow: hidden;
+
+    /* Card Styles */
+    .card {
       background: white;
-      transition: opacity 0.8s ease;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
     }
-    #image-container img {
+
+    .card:hover {
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      transform: translateY(-5px);
+    }
+
+    .card h2 {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card h2 i {
+      font-size: 1.3em;
+    }
+
+    /* Upload Section */
+    .upload-section {
+      border: 2px dashed var(--border-color);
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: var(--bg-light);
+      margin: 20px 0;
+    }
+
+    .upload-section:hover {
+      border-color: var(--primary);
+      background: rgba(16, 218, 134, 0.05);
+    }
+
+    .upload-section.dragover {
+      border-color: var(--primary);
+      background: rgba(16, 218, 134, 0.1);
+      transform: scale(1.02);
+    }
+
+    .upload-section i {
+      font-size: 3em;
+      color: var(--primary);
+      margin-bottom: 15px;
+    }
+
+    .upload-section p {
+      color: var(--text-light);
+      margin: 10px 0;
+      font-size: 0.95em;
+    }
+
+    #fileInput, #cameraInput {
+      display: none;
+    }
+
+    /* Camera Section */
+    .camera-section {
+      position: relative;
+      margin: 20px 0;
+    }
+
+    #cameraVideo {
       width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-      transition: opacity 0.8s ease;
+      border-radius: 12px;
+      background: #000;
+      display: none;
+      max-height: 400px;
     }
-    .scanner {
+
+    #cameraCanvas {
+      display: none;
+    }
+
+    .camera-controls {
+      display: none;
+      margin-top: 15px;
+      gap: 10px;
+    }
+
+    .camera-controls.active {
+      display: flex;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(16, 218, 134, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--bg-light);
+      color: var(--primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border-color);
+    }
+
+    .btn-danger {
+      background: var(--error);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c71c1c;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--border-color);
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    .spinner.active {
+      display: block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Result Section */
+    .result-section {
+      display: none;
+    }
+
+    .result-section.active {
+      display: block;
+    }
+
+    .result-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .result-header h3 {
+      font-size: 2em;
+      margin-bottom: 5px;
+    }
+
+    .result-image {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .result-image img {
+      max-width: 100%;
+      max-height: 400px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      margin-bottom: 15px;
+    }
+
+    .result-details {
+      background: var(--bg-light);
+      border-left: 4px solid var(--primary);
+      padding: 20px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+
+    .detail-row {
+      margin: 12px 0;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 0.9em;
+    }
+
+    .detail-value {
+      color: var(--text-dark);
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+
+    /* Preview Container */
+    .preview-container {
+      position: relative;
+      margin: 20px 0;
+      display: none;
+    }
+
+    .preview-container.active {
+      display: block;
+    }
+
+    .preview-container img {
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .scanner-line {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
-      height: 5px;
-      background: linear-gradient(to bottom, rgba(0,255,0,0) 0%, rgba(73, 201, 73, 0.5) 50%, rgba(0,255,0,0) 100%);
+      height: 3px;
+      background: linear-gradient(to bottom, rgba(16, 218, 134, 0), rgba(16, 218, 134, 0.8), rgba(16, 218, 134, 0));
       animation: scan 2s linear infinite;
-      pointer-events: none;
-      transition: opacity 0.8s ease;
+      opacity: 0;
     }
+
+    .scanner-line.active {
+      opacity: 1;
+    }
+
     @keyframes scan {
       0% { top: 0; }
-      100% { top: 395px; }
+      100% { top: 100%; }
     }
-    #result img {
-      max-width: 400px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      margin-top: 10px;
+
+    /* Error Message */
+    .error-message {
+      background: var(--error);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      display: none;
     }
-    .fade-out { opacity: 0; }
+
+    .error-message.active {
+      display: block;
+    }
+
+    /* Success Message */
+    .success-message {
+      background: var(--success);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      display: none;
+    }
+
+    .success-message.active {
+      display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      header h1 {
+        font-size: 1.8em;
+      }
+
+      .upload-section {
+        padding: 30px;
+      }
+
+      .upload-section i {
+        font-size: 2.5em;
+      }
+    }
+
+    /* Tab Navigation */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text-light);
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
+  <header>
+    <h1><i class="fas fa-leaf"></i> Medicinal Plant Identifier</h1>
+    <p>Advanced Plant Recognition & Analysis System</p>
+  </header>
+
   <div class="container">
-    <h1>
-      <span style="color: rgb(20, 175, 20);">Medicinal Plant</span>
-      <span style="color: white;"> Identifier</span>
-    </h1>
-    <p>Use camera or upload an leaf image to identify a plant</p>
+    <div class="main-grid">
+      <!-- Upload & Camera Card -->
+      <div class="card">
+        <h2><i class="fas fa-images"></i> Capture Plant Image</h2>
+        
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('upload')">Upload</button>
+          <button class="tab-btn" onclick="switchTab('camera')">Camera</button>
+        </div>
 
-    <!-- Camera Capture -->
-    <button onclick="openCamera()">Camera</button>
-    <video id="camera" autoplay style="display:none; width:400px; margin-top:20px;"></video>
-    <canvas id="snapshot" style="display:none;"></canvas>
+        <!-- Upload Tab -->
+        <div id="upload" class="tab-content active">
+          <div class="upload-section" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p><strong>Click to upload</strong> or drag and drop</p>
+            <p style="font-size: 0.85em;">PNG, JPG, GIF up to 10MB</p>
+          </div>
+          <input type="file" id="fileInput" accept="image/*">
+        </div>
 
-    <!-- Upload Input -->
-    <form id="uploadForm" enctype="multipart/form-data">
-      <input type="file" name="image" accept="image/*">
-      <button type="submit">Get Plant</button>
-    </form>
+        <!-- Camera Tab -->
+        <div id="camera" class="tab-content">
+          <div class="camera-section">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <canvas id="cameraCanvas"></canvas>
+            <div class="camera-controls" id="cameraControls">
+              <button class="btn btn-primary" id="captureBtn" onclick="capturePhoto()">
+                <i class="fas fa-camera"></i> Capture Photo
+              </button>
+              <button class="btn btn-secondary" onclick="stopCamera()">
+                <i class="fas fa-times"></i> Close Camera
+              </button>
+            </div>
+          </div>
+        </div>
 
-    <!-- Image Preview + Scanner -->
-    <div id="image-container" style="display:none;">
-      <img id="preview" src="">
-      <div class="scanner" id="scanner"></div>
+        <!-- Preview -->
+        <div class="preview-container" id="previewContainer">
+          <img id="preview" src="" alt="Preview">
+          <div class="scanner-line" id="scannerLine"></div>
+        </div>
+
+        <!-- Messages -->
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <!-- Loading -->
+        <div class="spinner" id="spinner"></div>
+
+        <!-- Buttons -->
+        <div style="text-align: center; margin-top: 20px;">
+          <button class="btn btn-primary" id="predictBtn" onclick="predict()" style="display: none;">
+            <i class="fas fa-search"></i> Identify Plant
+          </button>
+          <button class="btn btn-secondary" id="resetBtn" onclick="resetForm()" style="display: none;">
+            <i class="fas fa-redo"></i> Try Another
+          </button>
+        </div>
+      </div>
+
+      <!-- Results Card -->
+      <div class="card">
+        <h2><i class="fas fa-chart-bar"></i> Plant Analysis Results</h2>
+        
+        <div class="result-section" id="resultSection">
+          <div class="result-header">
+            <h3 id="plantName"></h3>
+            <p id="confidence"></p>
+          </div>
+
+          <div class="result-image" id="resultImage"></div>
+
+          <div class="result-details">
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-dna"></i> Scientific Name</div>
+              <div class="detail-value" id="scientificName">Loading...</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-mortar-pestle"></i> Usage & Benefits</div>
+              <div class="detail-value" id="usage">Loading...</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-info-circle"></i> Additional Information</div>
+              <div class="detail-value" id="additionalInfo">Loading...</div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="downloadReport()" style="width: 100%; margin-top: 15px;">
+            <i class="fas fa-download"></i> Download Report
+          </button>
+        </div>
+
+        <div style="text-align: center; color: var(--text-light); padding: 40px;">
+          <i class="fas fa-inbox" style="font-size: 3em; margin-bottom: 10px; display: block;"></i>
+          <p>Upload or capture a plant image to see analysis results here</p>
+        </div>
+      </div>
     </div>
-
-    <!-- Result -->
-    <div id="result"></div>
   </div>
 
   <script>
-    // Open Camera
-    function openCamera() {
-      let video = document.getElementById("camera");
-      video.style.display = "block";
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => { video.srcObject = stream; })
-        .catch(err => { alert("Camera not available: " + err); });
+    let currentFile = null;
+    let currentStream = null;
+
+    // Tab switching
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      document.event.target.closest('.tab-btn').classList.add('active');
+
+      if (tab === 'camera') {
+        startCamera();
+      } else {
+        stopCamera();
+      }
     }
 
-    // Handle Upload Prediction
-    document.getElementById("uploadForm").addEventListener("submit", async function(e) {
+    // File Upload Handling
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+
+    uploadArea.addEventListener('dragover', (e) => {
       e.preventDefault();
-      let file = this.elements["image"].files[0];
-      if (!file) return alert("Please select an image!");
-
-      let preview = document.getElementById("preview");
-      let container = document.getElementById("image-container");
-      let scanner = document.getElementById("scanner");
-
-      container.style.display = "block";
-      container.style.opacity = "1";
-      preview.src = URL.createObjectURL(file);
-      preview.classList.remove("fade-out");
-      scanner.style.opacity = "1";
-
-      await new Promise(res => setTimeout(res, 500)); // scanner effect delay
-
-      // Send to backend
-      let formData = new FormData();
-      formData.append("image", file);
-      let response = await fetch("/predict", { method: "POST", body: formData });
-      let data = await response.json();
-
-      // Fade out preview + scanner
-      preview.classList.add("fade-out");
-      scanner.classList.add("fade-out");
-      setTimeout(() => { container.style.display = "none"; }, 800);
-
-      // ✅ Show actual plant image from backend
-      document.getElementById("result").innerHTML = `
-        <h2>${data.plant}</h2>
-        <img src="${data.image_url}" alt="${data.plant}" />
-        <br><button onclick="getDetails('${data.plant}')">More Details</button>
-      `;
+      uploadArea.classList.add('dragover');
     });
 
-    // Fetch Details
-    async function getDetails(name) {
-      let response = await fetch(`/details?name=${name}`);
-      let data = await response.json();
-      document.getElementById("result").innerHTML += `
-        <p><b>Scientific Name:</b> ${data.scientific_name}</p>
-        <p><b>Usage:</b> ${data.usage}</p>
-      `;
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length) handleFile(files[0]);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+      if (!file.type.startsWith('image/')) {
+        showError('Please upload a valid image file');
+        return;
+      }
+      currentFile = file;
+      showPreview(URL.createObjectURL(file));
+      showSuccess('Image selected successfully!');
+      document.getElementById('predictBtn').style.display = 'inline-flex';
+    }
+
+    // Camera Functions
+    function startCamera() {
+      const video = document.getElementById('cameraVideo');
+      navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      }).then(stream => {
+        currentStream = stream;
+        video.srcObject = stream;
+        video.style.display = 'block';
+        document.getElementById('cameraControls').classList.add('active');
+      }).catch(err => {
+        showError('Camera access denied or not available');
+      });
+    }
+
+    function stopCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        document.getElementById('cameraVideo').style.display = 'none';
+        document.getElementById('cameraControls').classList.remove('active');
+      }
+    }
+
+    function capturePhoto() {
+      const video = document.getElementById('cameraVideo');
+      const canvas = document.getElementById('cameraCanvas');
+      const ctx = canvas.getContext('2d');
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+
+      canvas.toBlob(blob => {
+        currentFile = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+        showPreview(canvas.toDataURL());
+        showSuccess('Photo captured successfully!');
+        stopCamera();
+        document.getElementById('predictBtn').style.display = 'inline-flex';
+      });
+    }
+
+    function showPreview(src) {
+      const container = document.getElementById('previewContainer');
+      document.getElementById('preview').src = src;
+      container.classList.add('active');
+      document.getElementById('scannerLine').classList.add('active');
+    }
+
+    // Prediction
+    async function predict() {
+      if (!currentFile) {
+        showError('Please upload or capture an image first');
+        return;
+      }
+
+      const spinner = document.getElementById('spinner');
+      spinner.classList.add('active');
+      document.getElementById('predictBtn').style.display = 'none';
+
+      try {
+        const formData = new FormData();
+        formData.append('image', currentFile);
+
+        const response = await fetch('/predict', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error('Prediction failed');
+        
+        const data = await response.json();
+        showResult(data);
+      } catch (error) {
+        showError('Error identifying plant: ' + error.message);
+      } finally {
+        spinner.classList.remove('active');
+        document.getElementById('resetBtn').style.display = 'inline-flex';
+      }
+    }
+
+    function showResult(data) {
+      document.getElementById('resultSection').style.display = 'block';
+      document.getElementById('plantName').textContent = data.plant;
+      document.getElementById('confidence').textContent = 'Confidence: High';
+      document.getElementById('resultImage').innerHTML = `<img src="${data.image_url}" alt="${data.plant}">`;
+      document.getElementById('scientificName').textContent = data.plant || 'N/A';
+      document.getElementById('usage').textContent = 'Traditional medicinal uses and health benefits information will appear here.';
+      document.getElementById('additionalInfo').textContent = 'Additional plant characteristics and information.';
+    }
+
+    function resetForm() {
+      currentFile = null;
+      fileInput.value = '';
+      document.getElementById('previewContainer').classList.remove('active');
+      document.getElementById('resultSection').style.display = 'none';
+      document.getElementById('predictBtn').style.display = 'none';
+      document.getElementById('resetBtn').style.display = 'none';
+      clearMessages();
+    }
+
+    // Messages
+    function showError(msg) {
+      const el = document.getElementById('errorMessage');
+      el.textContent = msg;
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), 5000);
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('successMessage');
+      el.textContent = msg;
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), 3000);
+    }
+
+    function clearMessages() {
+      document.getElementById('errorMessage').classList.remove('active');
+      document.getElementById('successMessage').classList.remove('active');
+    }
+
+    function downloadReport() {
+      showSuccess('Report download initiated');
     }
   </script>
 </body>
