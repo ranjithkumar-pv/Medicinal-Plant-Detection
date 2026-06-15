@@ -10,8 +10,15 @@ app = Flask(__name__)
 
 # --- Model ---
 MODEL_PATH = "Model_Mobilenet.h5"
-model = load_model(MODEL_PATH)
+model = None
 IMAGE_SIZE = (224, 224)
+
+def load_prediction_model():
+    global model
+    if model is None:
+        app.logger.info("Loading TensorFlow model from %s", MODEL_PATH)
+        model = load_model(MODEL_PATH)
+        app.logger.info("Model loaded successfully")
 
 # --- Prediction ---
 def predict_plant(img: Image.Image):
@@ -21,7 +28,8 @@ def predict_plant(img: Image.Image):
     predictions = model.predict(img_array)
     class_idx = np.argmax(predictions[0])
     plant_name = CLASS_NAMES[class_idx]
-    return plant_name
+    confidence = float(np.max(predictions[0]))
+    return plant_name, confidence
 
 # --- Routes ---
 @app.route("/")
@@ -39,13 +47,16 @@ def predict():
     except:
         return jsonify({"error": "Invalid image"}), 400
 
-    plant_name = predict_plant(img)
-
-    # Use static/plant_img
+    load_prediction_model()
+    plant_name, confidence = predict_plant(img)
+    details = PLANT_DETAILS.get(plant_name, {})
     image_url = url_for("static", filename=f"{plant_name}.jpg")
 
     return jsonify({
         "plant": plant_name,
+        "confidence": f"{confidence * 100:.1f}%",
+        "scientific_name": details.get("scientific_name", "N/A"),
+        "usage": details.get("medicinal_usage", "N/A"),
         "image_url": image_url
     })
 

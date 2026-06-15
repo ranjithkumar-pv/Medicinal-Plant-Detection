@@ -709,13 +709,12 @@
         const formData = new FormData();
         formData.append('image', currentFile);
 
-        const fetchPromise = fetch('/predict', {
+        const response = await fetch('/predict', {
           method: 'POST',
-          body: formData,
-          signal: AbortSignal.timeout(30000)
+          body: formData
         });
 
-        const [response] = await Promise.all([fetchPromise, scanComplete]);
+        await scanComplete;
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
